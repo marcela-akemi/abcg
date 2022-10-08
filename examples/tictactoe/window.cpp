@@ -26,7 +26,7 @@ void Window::onPaintUI() {
                      ImGuiWindowFlags_NoCollapse};
     ImGui::Begin("Tic-Tac-Toe", nullptr, flags);
 
-        // Menu
+    // Menu
     {
       bool restartSelected{};
       if (ImGui::BeginMenuBar()) {
@@ -40,7 +40,8 @@ void Window::onPaintUI() {
         restartGame();
       }
     }
-        // Static text showing current turn or win/draw messages
+
+    // Static text showing current turn or win/draw messages
     {
       std::string text;
       switch (m_gameState) {
@@ -65,9 +66,8 @@ void Window::onPaintUI() {
     }
 
     ImGui::Spacing();
-    
-    
-     // Game board
+
+    // Game board
     {
       auto const gridHeight{appWindowHeight - 22 - 60 - (m_N * 10) - 60};
       auto const buttonHeight{gridHeight / m_N};
@@ -84,7 +84,7 @@ void Window::onPaintUI() {
             // Get current character
             auto ch{m_board.at(offset)};
 
-            // Replace null character with w                                                                                                        hitespace because the button label
+            // Replace null character with whitespace because the button label
             // cannot be an empty string
             if (ch == 0) {
               ch = ' ';
@@ -107,12 +107,9 @@ void Window::onPaintUI() {
       ImGui::PopFont();
     }
 
-
-
     ImGui::Spacing();
-    // TODO: Add "Restart game" button
 
-        // "Restart game" button
+    // "Restart game" button
     {
       if (ImGui::Button("Restart game", ImVec2(-1, 50))) {
         restartGame();
@@ -121,4 +118,79 @@ void Window::onPaintUI() {
 
     ImGui::End();
   }
+}
+
+void Window::checkEndCondition() {
+  if (m_gameState != GameState::Play) {
+    return;
+  }
+
+  // Lambda expression that checks if a string contains only Xs or Os. If so, it
+  // changes the game state to WinX or WinO accordingly and returns true.
+  // Otherwise, returns false.
+  auto allXsOrOs{[&](std::string_view str) {
+    if (str == std::string(m_N, 'X')) {
+      m_gameState = GameState::WinX;
+      return true;
+    }
+    if (str == std::string(m_N, 'O')) {
+      m_gameState = GameState::WinO;
+      return true;
+    }
+    return false;
+  }};
+
+  // Check rows
+  for (auto const i : iter::range(m_N)) {
+    std::string concatenation;
+    for (auto const j : iter::range(m_N)) {
+      concatenation += m_board.at(i * m_N + j);
+    }
+    if (allXsOrOs(concatenation)) {
+      return;
+    }
+  }
+
+  // Check columns
+  for (auto const j : iter::range(m_N)) {
+    std::string concatenation;
+    for (auto const i : iter::range(m_N)) {
+      concatenation += m_board.at(i * m_N + j);
+    }
+    if (allXsOrOs(concatenation)) {
+      return;
+    }
+  }
+
+  // Check main diagonal
+  {
+    std::string concatenation;
+    for (auto const i : iter::range(m_N)) {
+      concatenation += m_board.at(i * m_N + i);
+    }
+    if (allXsOrOs(concatenation)) {
+      return;
+    }
+  }
+
+  // Check inverse diagonal
+  {
+    std::string concatenation;
+    for (auto const i : iter::range(m_N)) {
+      concatenation += m_board.at(i * m_N + (m_N - i - 1));
+    }
+    if (allXsOrOs(concatenation)) {
+      return;
+    }
+  }
+
+  // Check draw
+  if (std::find(m_board.begin(), m_board.end(), '\0') == m_board.end()) {
+    m_gameState = GameState::Draw;
+  }
+}
+
+void Window::restartGame() {
+  m_board.fill('\0');
+  m_gameState = GameState::Play;
 }
