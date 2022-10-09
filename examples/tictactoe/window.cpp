@@ -1,7 +1,12 @@
 #include "window.hpp"
+#include <chrono>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <string>
 
 
-
+using namespace std;
 
 void Window::onCreate() {
   // Load font with bigger size for the X's and O's
@@ -11,227 +16,76 @@ void Window::onCreate() {
   if (m_font == nullptr) {
     throw abcg::RuntimeError{"Cannot load font file"};
   }
-
-                char letters[] = "XO";
-          char pos_00 = letters[rand() % 2];
-          char pos_01 = letters[rand() % 2];
-           char pos_02 = letters[rand() % 2];
-          char pos_10 = letters[rand() % 2];
-           char pos_11 = letters[rand() % 2];
-          char pos_12 = letters[rand() % 2];
-           char pos_20 = letters[rand() % 2];
-           char pos_21 = letters[rand() % 2];
-           char pos_22 = letters[rand() % 2];
-              // auto ch = 4;
-          m_values.at(0) = pos_00;
-          m_values.at(1) = pos_01;
-          m_values.at(2) = pos_02;
-          m_values.at(3) = pos_10;
-          m_values.at(4) = pos_11;
-          m_values.at(5) = pos_12;
-          m_values.at(6) = pos_20;
-          m_values.at(7) = pos_21;
-          m_values.at(8) = pos_22;
-
-  restartGame();
+  
 }
-
-
-
 void Window::onPaintUI() {
   // Get size of application's window
   auto const appWindowWidth{gsl::narrow<float>(getWindowSettings().width)};
   auto const appWindowHeight{gsl::narrow<float>(getWindowSettings().height)};
-
-  // "Tic-Tac-Toe" window
+  
   {
     ImGui::SetNextWindowSize(ImVec2(appWindowWidth, appWindowHeight));
     ImGui::SetNextWindowPos(ImVec2(0, 0));
 
     auto const flags{ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoResize |
                      ImGuiWindowFlags_NoCollapse};
-    ImGui::Begin("Tic-Tac-Toe", nullptr, flags);
+    ImGui::Begin("Encriptador", nullptr, flags);
 
-    // Menu
+    // Static text
+    auto const &windowSettings{getWindowSettings()};
+    ImGui::Text("Current window size: %dx%d (in windowed mode)",
+                windowSettings.width, windowSettings.height);
+
+    // Slider from 0.0f to 1.0f
+    static float f{};
+    ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+
+    // ColorEdit to change the clear color
+  
+    ImGui::ColorEdit3("clear color", m_clearColor.data());
+
+    int i;
+    
+
+    ImGui::InputText("input text", str, IM_ARRAYSIZE(str));
+    if(ImGui::Button("Criptografar", ImVec2(-2, 25)))
     {
-      bool restartSelected{};
-      if (ImGui::BeginMenuBar()) {
-        if (ImGui::BeginMenu("Game")) {
-          ImGui::MenuItem("Restart", nullptr, &restartSelected);
-          ImGui::EndMenu();
-        }
-        ImGui::EndMenuBar();
+      for(i = 0; (i < 100 && str[i] != '\0'); i++)
+      {
+        temp[i] = str[i];
       }
-      if (restartSelected) {
-        restartGame();
+      for(i = 0; (i < 100 && temp[i] != '\0'); i++){
+        temp[i] = temp[i] + 2; //the key for encryption is 3 that is added to ASCII value 
       }
     }
-static float f{};
-char buf[255]{};
-ImGui::Text("Hello, world %d", 123);
-ImGui::InputText("string", buf, IM_ARRAYSIZE(buf));
-ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-    // Static text showing current turn or win/draw messages
-    {
-      std::string text;
-      switch (m_gameState) {
-      case GameState::Play:
-        text = fmt::format("{}'s turn", m_XsTurn ? 'X' : 'O');
-        break;
-      case GameState::Draw:
-        text = "Draw!";
-        break;
-      case GameState::WinX:
-        text = "X's player wins!";
-        break;
-      case GameState::WinO:
-        text = "O's player wins!";
-        break;
-      }
-      // Center text
-      ImGui::SetCursorPosX(
-          (appWindowWidth - ImGui::CalcTextSize(text.c_str()).x) / 2);
-      ImGui::Text("%s", text.c_str());
-      ImGui::Spacing();
-    }
-
+     ImGui::Text("Texto criptografado: %s", temp);
     ImGui::Spacing();
-
-    // Game board
+    if(ImGui::Button("Limpar", ImVec2(-2, 25)))
     {
-      auto const gridHeight{appWindowHeight - 22 - 60 - (m_N * 10) - 60};
-      auto const buttonHeight{gridHeight / m_N};
-
-      // Use custom font
-      ImGui::PushFont(m_font);
-      if (ImGui::BeginTable("Game board", m_N)) {
-                  srand(time(0));
-
-        for (auto i : iter::range(m_N)) {
-          ImGui::TableNextRow();
-          for (auto j : iter::range(m_N)) {
-            ImGui::TableSetColumnIndex(j);
-            auto const offset{i * m_N + j};
-          
-            // Get current character
-            auto ch{m_board.at(offset)};
-
-            // Replace null character with whitespace because the button label
-            // cannot be an empty string
-            if (ch == 0) {
-              ch = ' ';
-            }
-          
-            m_board.at(offset) = m_values.at(offset);
-
-            // Button text is ch followed by an ID in the format ##ij
-            auto buttonText{fmt::format("{}##{}{}", ch, i, j)};
-            if (ImGui::Button(buttonText.c_str(), ImVec2(-1, buttonHeight))) {
-            if (m_gameState == GameState::Play) {
-                m_values.at(offset) = m_XsTurn ? 'X' : 'O';
-                // checkEndCondition();
-                m_XsTurn = !m_XsTurn;
-              }
-
-            }
-
-            }
-          }
-
-          ImGui::Spacing();
-
-         
-
-        }
-        ImGui::EndTable();
-      }
-      ImGui::PopFont();
-    }
-
-    ImGui::Spacing();
-
-    // "Restart game" button
-    {
-      if (ImGui::Button("Restart game", ImVec2(-1, 50))) {
-        restartGame();
+      for(i = 0; (i < 100 && str[i] != '\0'); i++)
+      {
+        str[i] = {0};
+        temp[i] = {0};
       }
     }
 
     ImGui::End();
   }
-
-
-void Window::checkEndCondition() {
-  if (m_gameState != GameState::Play) {
-    return;
-  }
-
-  // Lambda expression that checks if a string contains only Xs or Os. If so, it
-  // changes the game state to WinX or WinO accordingly and returns true.
-  // Otherwise, returns false.
-  auto allXsOrOs{[&](std::string_view str) {
-    if (str == std::string(m_N, 'X')) {
-      m_gameState = GameState::WinX;
-      return true;
-    }
-    if (str == std::string(m_N, 'O')) {
-      m_gameState = GameState::WinO;
-      return true;
-    }
-    return false;
-  }};
-
-  // Check rows
-  for (auto const i : iter::range(m_N)) {
-    std::string concatenation;
-    for (auto const j : iter::range(m_N)) {
-      concatenation += m_board.at(i * m_N + j);
-    }
-    if (allXsOrOs(concatenation)) {
-      return;
-    }
-  }
-
-  // Check columns
-  for (auto const j : iter::range(m_N)) {
-    std::string concatenation;
-    for (auto const i : iter::range(m_N)) {
-      concatenation += m_board.at(i * m_N + j);
-    }
-    if (allXsOrOs(concatenation)) {
-      return;
-    }
-  }
-
-  // Check main diagonal
-  {
-    std::string concatenation;
-    for (auto const i : iter::range(m_N)) {
-      concatenation += m_board.at(i * m_N + i);
-    }
-    if (allXsOrOs(concatenation)) {
-      return;
-    }
-  }
-
-  // Check inverse diagonal
-  {
-    std::string concatenation;
-    for (auto const i : iter::range(m_N)) {
-      concatenation += m_board.at(i * m_N + (m_N - i - 1));
-    }
-    if (allXsOrOs(concatenation)) {
-      return;
-    }
-  }
-
-  // Check draw
-  if (std::find(m_board.begin(), m_board.end(), '\0') == m_board.end()) {
-    m_gameState = GameState::Draw;
-  }
 }
 
-void Window::restartGame() {
-  m_board.fill('\0');
-  m_gameState = GameState::Play;
+#include<stdio.h>
+#include<math.h>
+ 
+//to find gcd
+int gcd(int a, int h)
+{
+    int temp;
+    while(1)
+    {
+        temp = a%h;
+        if(temp==0)
+        return h;
+        a = h;
+        h = temp;
+    }
 }
