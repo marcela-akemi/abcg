@@ -16,6 +16,9 @@ private:
 
   bool m_XsTurn{true};
   std::array<char, m_N * m_N> m_board{}; // '\0', 'X' or 'O'
+  std::array<char, m_N * m_N> m_values{}; // '\0', 'X' or 'O'
+
+  
 
   ImFont *m_font{};
 

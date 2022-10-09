@@ -1,5 +1,8 @@
 #include "window.hpp"
 
+
+
+
 void Window::onCreate() {
   // Load font with bigger size for the X's and O's
   auto const filename{abcg::Application::getAssetsPath() +
@@ -9,8 +12,31 @@ void Window::onCreate() {
     throw abcg::RuntimeError{"Cannot load font file"};
   }
 
+                char letters[] = "XO";
+          char pos_00 = letters[rand() % 2];
+          char pos_01 = letters[rand() % 2];
+           char pos_02 = letters[rand() % 2];
+          char pos_10 = letters[rand() % 2];
+           char pos_11 = letters[rand() % 2];
+          char pos_12 = letters[rand() % 2];
+           char pos_20 = letters[rand() % 2];
+           char pos_21 = letters[rand() % 2];
+           char pos_22 = letters[rand() % 2];
+              // auto ch = 4;
+          m_values.at(0) = pos_00;
+          m_values.at(1) = pos_01;
+          m_values.at(2) = pos_02;
+          m_values.at(3) = pos_10;
+          m_values.at(4) = pos_11;
+          m_values.at(5) = pos_12;
+          m_values.at(6) = pos_20;
+          m_values.at(7) = pos_21;
+          m_values.at(8) = pos_22;
+
   restartGame();
 }
+
+
 
 void Window::onPaintUI() {
   // Get size of application's window
@@ -40,7 +66,11 @@ void Window::onPaintUI() {
         restartGame();
       }
     }
-
+static float f{};
+char buf[255]{};
+ImGui::Text("Hello, world %d", 123);
+ImGui::InputText("string", buf, IM_ARRAYSIZE(buf));
+ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
     // Static text showing current turn or win/draw messages
     {
       std::string text;
@@ -75,12 +105,14 @@ void Window::onPaintUI() {
       // Use custom font
       ImGui::PushFont(m_font);
       if (ImGui::BeginTable("Game board", m_N)) {
+                  srand(time(0));
+
         for (auto i : iter::range(m_N)) {
           ImGui::TableNextRow();
           for (auto j : iter::range(m_N)) {
             ImGui::TableSetColumnIndex(j);
             auto const offset{i * m_N + j};
-
+          
             // Get current character
             auto ch{m_board.at(offset)};
 
@@ -89,18 +121,27 @@ void Window::onPaintUI() {
             if (ch == 0) {
               ch = ' ';
             }
+          
+            m_board.at(offset) = m_values.at(offset);
 
             // Button text is ch followed by an ID in the format ##ij
             auto buttonText{fmt::format("{}##{}{}", ch, i, j)};
             if (ImGui::Button(buttonText.c_str(), ImVec2(-1, buttonHeight))) {
-              if (m_gameState == GameState::Play && ch == ' ') {
-                m_board.at(offset) = m_XsTurn ? 'X' : 'O';
-                checkEndCondition();
+            if (m_gameState == GameState::Play) {
+                m_values.at(offset) = m_XsTurn ? 'X' : 'O';
+                // checkEndCondition();
                 m_XsTurn = !m_XsTurn;
               }
+
+            }
+
             }
           }
+
           ImGui::Spacing();
+
+         
+
         }
         ImGui::EndTable();
       }
@@ -118,7 +159,7 @@ void Window::onPaintUI() {
 
     ImGui::End();
   }
-}
+
 
 void Window::checkEndCondition() {
   if (m_gameState != GameState::Play) {
