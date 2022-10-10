@@ -29,7 +29,12 @@ private:
 
   void checkEndCondition();
   void restartGame();
+  void teste()
+  {
+    
 
+  }
+  
 
 
 };
